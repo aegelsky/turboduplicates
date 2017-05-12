@@ -92,8 +92,8 @@ int main(int argc, char **argv)
 								      << "0: no draw (default). 10: draw images horizontal concatenated. " << std::endl
 								      << "11: draw images vertical concatenated. 12: draw images vertical and horizontal concatenated. " << std::endl
 					<< "- symmetric_calc [optional 0/1]: make symmetric compares, e.g. 1.png compares with 2.png and vice versa." << std::endl 
-										<< "0: make symmetric (default), it's more efficiently." << std::endl 
-										<< "1: don't make symmetric." << std::endl 
+										<< "1: make symmetric (default), it's more efficiently." << std::endl 
+										<< "0: don't make symmetric." << std::endl 
 				<< " ******************************************************************************* " << std::endl
 				<< " *********************  Jean-Michel Morel, Guoshen Yu, 2010 ******************** " << std::endl
 				<< " ******************************************************************************* " << std::endl;

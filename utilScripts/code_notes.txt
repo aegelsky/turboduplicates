@@ -1,0 +1,35 @@
+
+HISTTIMEFORMAT="%d/%m/%y %T "
+
+
+find . -name "*.jpg" -print0 | xargs -0 mogrify -format png
+
+find . -name "*.jpg" -type f -delete
+
+
+
+
+
+time ./demo_ASIFT 1
+time ./demo_ASIFT 1 0 0 0
+
+rm -rf pics* results.txt
+
+
+
+
+http://wrappers.ru/modules/toprint.php?coll=3660
+
+
+
+
+
+
+find . -name "*.png" -type f | wc -l
+
+
+find . -name "*.o" -type f -delete | rm demo_ASIFT
+
+make OMP=1
+
+
