@@ -122,8 +122,14 @@ int main(int argc, char **argv)
 	if (-1 == stat(pathPoints.c_str(), &st))
 		mkdir(pathPoints.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
+	// обсудить, скорее всего придется задать в 0
+	int flag_resize = 0;
+	if (argc > 2) {
+		flag_resize = atoi(argv[2]);
+	}
+
 	std::vector<std::string> filePoints;
-        int nFilesCount = fileNames.size();
+    int nFilesCount = fileNames.size();
 	for (int i = 0; i < nFilesCount; ++i) {
 
 		float zoom = 1;
@@ -143,6 +149,7 @@ int main(int argc, char **argv)
 		st = {0};
 		std::size_t found = fileName.find_last_of("/");
 		std::string subDir = fileName.substr(0, found);
+
 		if (-1 == stat(subDir.c_str(), &st))
 			mkdir(subDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
@@ -152,7 +159,7 @@ int main(int argc, char **argv)
 		float * iarr1;
 		size_t w1, h1;
 		if (NULL == (iarr1 = read_png_f32_gray(fileNames.at(i).c_str(), &w1, &h1))) {
-				std::cerr << "Unable to load image file " << fileNames.at(i).c_str() << std::endl;
+				std::cerr << "Unable to load image file " << fileNames.at(i).c_str() << "\n";
 				continue;
 		}
 		std::vector<float> ipixels1(iarr1, iarr1 + w1 * h1);
@@ -165,17 +172,11 @@ int main(int argc, char **argv)
 
 		vector<float> ipixels1_zoom, ipixels2_zoom;
 
-		// обсудить, скорее всего придется задать в 0
-		int flag_resize = 0;
-		if (argc > 2) {
-			flag_resize = atoi(argv[2]);
-		}
-
 		int wS1 = 0, hS1 = 0;
 
 		if (flag_resize != 0) {
-			cout << "WARNING: The input images are resized to " << wS << "x" << hS << " for ASIFT. " << endl 
-			<< "         But the results will be normalized to the original image size." << endl << endl;
+			cout << "WARNING: The input images are resized to " << wS << "x" << hS << " for ASIFT. \n" 
+			<< "         But the results will be normalized to the original image size.\n\n";
 		
 			float InitSigma_aa = 1.6;
 		
@@ -237,6 +238,8 @@ int main(int argc, char **argv)
 							fproj_y3, 
 							fproj_x4, 
 							fproj_y4); 
+			free(fproj_x4);
+			free(fproj_y4);
 		}
 		else 
 		{
@@ -253,7 +256,7 @@ int main(int argc, char **argv)
 		//	int num_of_tilts1 = 1;
 		//	int num_of_tilts2 = 1;
 
-		cout << "Computing keypoints on the image: " << fileNames.at(i).c_str() << " progress here %: " << trunc(i*100/nFilesCount) << endl;
+		cout << "Computing keypoints on the image: " << fileNames.at(i).c_str() << " progress here %: " << trunc(i*100/nFilesCount) << "\n";
 		time_t tstart;
 		tstart = time(0);
 
@@ -270,10 +273,10 @@ int main(int argc, char **argv)
 
 	time_t tend;
 	tend = time(0);
-	//	cout << "Keypoints computation accomplished in " << difftime(tend, tstart) << " seconds." << endl;
+	//	cout << "Keypoints computation accomplished in " << difftime(tend, tstart) << " seconds." << "\n";
 
 	int flag_draw_matches = 0;
-	if (argc == 4) {
+	if (argc > 4) {
 		flag_draw_matches = atoi(argv[3]);
 	}
 
@@ -294,14 +297,16 @@ int main(int argc, char **argv)
 
 		int num_matchings;
 
-		float * iarr1;
 		size_t wS1, hS1;
-		if (NULL == (iarr1 = read_png_f32_gray(fileNames.at(i).c_str(), &wS1, &hS1))) {
-			std::cerr << "Unable to load image file " << fileNames.at(i).c_str() << std::endl;
-			continue;
+
+		{
+			float * iarr;
+			if (NULL == (iarr = read_png_f32_gray(fileNames.at(i).c_str(), &wS1, &hS1))) {
+				std::cerr << "Unable to load image file " << fileNames.at(i).c_str() << "\n";
+				continue;
+			}
+			free(iarr); /*memcheck*/
 		}
-		std::vector<float> ipixels1(iarr1, iarr1 + wS1 * hS1);
-		free(iarr1); /*memcheck*/
 
 		vector< vector< keypointslist > > keys1;
 		make_keys_all_vector(num_of_tilts1, keys1);
@@ -318,7 +323,7 @@ int main(int argc, char **argv)
 		std::string strResults = "";
 		const std::string fileResults = "results.txt";
 		int nCurFilesMatched = (i+1)*(2*nFilesCount - 2 - i)/2;
-		cout << "Matching the keypoints for: " << fileNames.at(i).c_str() << " progress %: " << (nCurFilesMatched*100/nTotalComps) << endl;
+		cout << "Matching the keypoints for: " << fileNames.at(i).c_str() << " progress %: " << (nCurFilesMatched*100/nTotalComps) << "\n";
 
 		std::string sMainFileName = fileNames.at(i);
 		std::size_t foundMainFileSlash = sMainFileName.find_last_of("/");
@@ -328,27 +333,30 @@ int main(int argc, char **argv)
 		for (; j < nFilesCount; ++j) {
 			//	tstart = time(0);
 			int nSubCurFilesMatched = nCurFilesMatched + j - i - 1;
-			cout << "  matching for: " << fileNames.at(j).c_str() << " sub progress %: " << ((j-i)*100/(nFilesCount-1-i)) << " total progress %: " << (nSubCurFilesMatched*100/nTotalComps) << endl;
+			cout << "  matching for: " << fileNames.at(j).c_str() << " sub progress %: " << ((j-i)*100/(nFilesCount-i)) << " total progress %: " << (nSubCurFilesMatched*100/nTotalComps) << "\n";
 
 			std::string sSubFileName = fileNames.at(j);
 			std::size_t foundSubFileSlash = sSubFileName.find_last_of("/");
 			std::string sSubFileDir = sSubFileName.substr(0, foundSubFileSlash);
 			if (sMainFileDir == sSubFileDir) {
-				// cout << "  !!! matching for: " << fileNames.at(j).c_str() << " skipped because they are in the same dir!" << endl;
+				//cout << "  !!! matching for: " << fileNames.at(j).c_str() << " skipped because they are in the same dir!" << "\n";
 				continue;
 			}
 
 
 			if (i == j) continue;
 
-			float * iarr2;
 			size_t wS2, hS2;
-			if (NULL == (iarr2 = read_png_f32_gray(fileNames.at(j).c_str(), &wS2, &hS2))) {
-				std::cerr << "Unable to load image file " << fileNames.at(j).c_str() << std::endl;
-				continue;
+
+			{
+				float * iarr;
+				if (NULL == (iarr = read_png_f32_gray(fileNames.at(j).c_str(), &wS2, &hS2))) {
+					std::cerr << "Unable to load image file " << fileNames.at(j).c_str() << "\n";
+					continue;
+				}
+				free(iarr); /*memcheck*/
 			}
-			std::vector<float> ipixels2(iarr2, iarr2 + wS2 * hS2);
-			free(iarr2); /*memcheck*/
+
 			float zoom_2 = 1;
 
 			read_keypoints(filePoints.at(j).c_str(), keys2, zoom_2);
@@ -374,14 +382,12 @@ int main(int argc, char **argv)
 	////// Write the coordinates of the matched points (row1, col1, row2, col2) to the file argv[5]
 	// запись координат только, если кол-во совпадающих точек не меньше заданного
 
-			//начало if на кол-во совпадающих точек
 			if (num_matchings >= MIN_MATCHING) {
-				cout << "  " << fileNames.at(i) << " -- " << fileNames.at(j) << endl << endl;
+				cout << "  " << fileNames.at(i) << " -- " << fileNames.at(j) << "\n\n";
 				if (needCaption) {
 					strResults += fileNames.at(i) + ":\n";
 					needCaption = false;
 				}
-
 				{
 					std::ostringstream strStream;
 					strStream << "\t" << fileNames.at(j) << " -- " 
@@ -397,56 +403,75 @@ int main(int argc, char **argv)
 					std::cerr << "Unable to open the file_matches for " << fileAllMatches.c_str();
 				}
 				file_matches.close();
-			}
 
-			std::string fileMatches, fileNameTemplate;
-			{
-				std::size_t slash = fileNames[i].find_last_of("/");
-				std::string subDir = fileNames[i].substr(slash + 1);
+				std::string fileMatches, fileNameTemplate;
+				{
+					std::size_t slash = fileNames[i].find_last_of("/");
+					std::string subDir = fileNames[i].substr(/*slash + 1*/2);
 
-				slash = fileNames[j].find_last_of("/");
-				std::ostringstream strStream;
-				strStream << "./" << pathComp << subDir << "/" << fileNames[j].substr(2, slash - 1);
-				subDir = strStream.str();
-				std::string command = "mkdir -p " + subDir;
-				st = {0};
-				// if such file already exists - do nothing
-				if (-1 == stat(subDir.c_str(), &st))
-					int dir_er = system(command.c_str());
+					slash = fileNames[j].find_last_of("/");
+					std::ostringstream strStream;
+					strStream << "./" << pathComp << subDir << "/" << fileNames[j].substr(2/*, slash - 1*/);
+					subDir = strStream.str();
 
-				std::size_t foundPoint = fileNames[j].find_last_of(".");
-				fileNameTemplate = subDir + fileNames[j].substr(slash + 1, foundPoint - slash - 1);
-				fileMatches = fileNameTemplate + ".txt";
-			}
-			std::ofstream file(fileMatches.c_str());
-			if (file.is_open())	{
-				// Write the number of matchings in the first line
-				file << num_matchings << "\n";
 
-				matchingslist::iterator ptr = matchings.begin();
-				for(int k = 0; k < (int) matchings.size(); ++k, ++ptr) {
-					file << zoom_1*ptr->first.x << "  " << zoom_1*ptr->first.y << "  " 
-						<<  zoom_2*ptr->second.x << "  " <<  zoom_2*ptr->second.y << "\n";
+					std::string command = "mkdir -p '" + subDir + "'";
+					st = {0};
+					// if such file already exists - do nothing
+					if (-1 == stat(subDir.c_str(), &st))
+						int dir_er = system(command.c_str());
+
+					std::size_t foundPoint = fileNames[j].find_last_of(".");
+					fileNameTemplate = subDir + "/" + fileNames[j].substr(slash + 1, foundPoint - slash - 1);
+					fileMatches = fileNameTemplate + ".txt";
 				}
-			}
-			else {
-				std::cerr << "Unable to open the file matchings.";
-			}
+				std::ofstream file(fileMatches.c_str());
+				if (file.is_open())	{
+					// Write the number of matchings in the first line
+					file << num_matchings << "\n";
 
-			// draw match lines
-			std::string picsHorizont, picsVertical;
-			if (flag_draw_matches == 10 || flag_draw_matches == 12 ) {
-				picsHorizont = fileNameTemplate + "_0.png";
-				draw_matching_horizontal(wS1, hS1, wS2, hS2, zoom_1, zoom_2, ipixels1, ipixels2,
-										matchings, picsHorizont.c_str());
-			}
+					matchingslist::iterator ptr = matchings.begin();
+					for(int k = 0; k < (int) matchings.size(); ++k, ++ptr) {
+						file << zoom_1*ptr->first.x << "  " << zoom_1*ptr->first.y << "  " 
+							<<  zoom_2*ptr->second.x << "  " <<  zoom_2*ptr->second.y << "\n";
+					}
+				}
+				else {
+					std::cerr << "Unable to open the file matchings.";
+				}
 
-			if (flag_draw_matches > 10 ) {
-				picsVertical = fileNameTemplate + "_1.png";
-				draw_matching_vertical(wS1, hS1, wS2, hS2, zoom_1, zoom_2, ipixels1, ipixels2,
-										matchings, picsVertical.c_str());
+				// draw match lines
+				if (flag_draw_matches != 0) {
+					float * iarr;
+					if (NULL == (iarr = read_png_f32_gray(fileNames.at(i).c_str(), &wS1, &hS1))) {
+						std::cerr << "Unable to load image file " << fileNames.at(i).c_str() << "\n";
+						continue;
+					}
+					std::vector<float> ipixels1(iarr, iarr + wS1 * hS1);
+					free(iarr); /*memcheck*/
+
+					if (NULL == (iarr = read_png_f32_gray(fileNames.at(j).c_str(), &wS2, &hS2))) {
+						std::cerr << "Unable to load image file " << fileNames.at(j).c_str() << "\n";
+						continue;
+					}
+					std::vector<float> ipixels2(iarr, iarr + wS2 * hS2);
+
+					free(iarr); /*memcheck*/
+
+					if (flag_draw_matches == 10 || flag_draw_matches == 12 ) {
+						std::string picsHorizont = fileNameTemplate + "_0.png";
+						draw_matching_horizontal(wS1, hS1, wS2, hS2, zoom_1, zoom_2, ipixels1, ipixels2,
+												matchings, picsHorizont.c_str());
+					}
+
+					if (flag_draw_matches > 10 ) {
+						std::string picsVertical = fileNameTemplate + "_1.png";
+						draw_matching_vertical(wS1, hS1, wS2, hS2, zoom_1, zoom_2, ipixels1, ipixels2,
+												matchings, picsVertical.c_str());
+					}
+				}
+				file.close();
 			}
-			file.close();
 		}
 
 		// make result file
@@ -473,7 +498,7 @@ int main(int argc, char **argv)
 			}
 
 			if (0 != rename(fileAllMatches.c_str(), checkFileName.c_str())) {
-				std::cerr << "Unable to rename the file all matchings for " << fileAllMatches.c_str() << endl;
+				std::cerr << "Unable to rename the file all matchings for " << fileAllMatches.c_str() << "\n";
 			}
 		}
 	}

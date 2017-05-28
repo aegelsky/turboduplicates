@@ -63,11 +63,10 @@ void unique_match1(matchingslist &seg_in,
 										vector< vector <float> > &Minfoall_in, 
 										vector< vector <float> > &Minfoall_out)
 {
-  int i_in, i_out;
   float x1_in, x2_in, y1_in, y2_in, x1_out, x2_out, y1_out, y2_out;
   int flag_unique;
   float d1, d2;
-  int Th2 = 2;
+  const int Th2 = 2;
 
   seg_out.push_back(seg_in[0]);
   Minfoall_out.push_back(Minfoall_in[0]);
@@ -83,7 +82,7 @@ void unique_match1(matchingslist &seg_in,
 		/* Bug fixed */
 	matchingslist::iterator ptr_in = seg_in.begin();
 	ptr_in++;
-	for ( i_in = 1; i_in < (int) seg_in.size(); ++i_in, ++ptr_in ) {
+	for ( int i_in = 1; i_in < (int) seg_in.size(); ++i_in, ++ptr_in ) {
 	  x1_in = ptr_in->first.x;
 	  y1_in = ptr_in->first.y;
 	  x2_in = ptr_in->second.x;
@@ -92,7 +91,7 @@ void unique_match1(matchingslist &seg_in,
 	  flag_unique = 1;
 
 	  matchingslist::iterator ptr_out = seg_out.begin(); 
-	  for ( i_out = 0; i_out < (int) seg_out.size(); ++i_out, ++ptr_out ) {
+	  for ( int i_out = 0; i_out < (int) seg_out.size(); ++i_out, ++ptr_out ) {
 		x1_out = ptr_out->first.x;
 		y1_out = ptr_out->first.y;
 		x2_out = ptr_out->second.x; 
@@ -288,7 +287,7 @@ void compensate_affine_coor(matching &matching1,
 	else {
 		x_ori2 = -w2 * cos(Rtheta2) / t_im2_2;
 		y_ori2 = ( w2 * sin(Rtheta2) + h2 * sin(Rtheta2-PI/2) ) / t_im2_1;
-  }
+	}
 
 	float sin_Rtheta = sin(Rtheta);
 	float cos_Rtheta = cos(Rtheta);
@@ -431,7 +430,7 @@ int compute_asift_matches(int num_of_tilts1,
 	// * tt, num_rot1, rr, tt2, num_rot1_2, rr2
 	// */
 	//vector<int> tilt_rot;
-	///* loop on tilts for image 1 */ 
+	// loop on tilts for image 1  
 	//for (int tt = 1; tt <= num_tilt1; tt++)
 	//{
 	//    float t = t_min * pow(t_k, tt-1);
@@ -483,8 +482,9 @@ int compute_asift_matches(int num_of_tilts1,
 	omp_set_nested(1);
 #endif 
 	// loop on tilts for image 1. 
+int tt; // for icc
 #pragma omp parallel for private(tt)
-	for (int tt = 1; tt <= num_tilt1; tt++) {
+	for (tt = 1; tt <= num_tilt1; tt++) {
 
 		float t = t_min * pow(t_k, tt-1);
 
@@ -564,7 +564,7 @@ int compute_asift_matches(int num_of_tilts1,
 					/* Store the matches */
 					if ( matchings1.size() > 0 ) {
 						matchings_vec[tt-1][rr-1][tt2-1][rr2-1] = matchingslist(matchings1.size());
-            Minfoall_vec[tt-1][rr-1][tt2-1][rr2-1].resize(matchings1.size());
+						Minfoall_vec[tt-1][rr-1][tt2-1][rr2-1].resize(matchings1.size());
 
 						for ( int cc = 0; cc < (int) matchings1.size(); cc++ ) {
 							///// In the coordinates the affine transformations have been normalized already in compute_asift_keypoints. So no need to normalize here. 
@@ -723,18 +723,18 @@ int compute_asift_matches(int num_of_tilts1,
 				Minfoall = Minfoall_unique;
 
 				if ( matchings.size() >= min_matching )
-				  cout << "  The two images match! " << matchings.size() << " matchings are identified. log(nfa)=" << nfa << "." << endl;
+				  cout << "  The two images match! " << matchings.size() << " matchings are identified. log(nfa)=" << nfa << ".\n";
 			}
 			else {
 				matchings.clear();
 				Minfoall.clear();
-				//cout << "The two images do not match. The matching is not significant: log(nfa)=" << nfa << "." << endl;
+				//cout << "The two images do not match. The matching is not significant: log(nfa)=" << nfa << ".\n";
 			}
 		}
 		else {
 			matchings.clear();
 			Minfoall.clear();
-			//cout << "The two images do not match. Not enough matches to do epipolar filtering." << endl;
+			//cout << "The two images do not match. Not enough matches to do epipolar filtering.\n";
 		}
 	}
 	else {
@@ -791,14 +791,14 @@ void read_keypoints(const char* filename,
 
 	  std::string str_tmp;
 	  // read num_keys, it is useless
-			ss >> str_tmp;
-			// read length_of_desciptors from file
-			ss >> str_tmp;
-			length_of_desciptors = ::atoi(str_tmp.c_str());
-			// read zoom from file, it can be different for different files
-			ss >> str_tmp;
-			zoom = ::atof(str_tmp.c_str());
-		}
+	  ss >> str_tmp;
+	  // read length_of_desciptors from file
+	  ss >> str_tmp;
+	  length_of_desciptors = ::atoi(str_tmp.c_str());
+	  // read zoom from file, it can be different for different files
+	  ss >> str_tmp;
+	  zoom = ::atof(str_tmp.c_str());
+	}
 
 	  for (int tt = 0; tt < (int) keys.size(); ++tt) {
 		int rr;
@@ -877,15 +877,16 @@ void get_dir_content(char* path, std::vector<std::string>& fileNames,
       }
   }
   closedir(d); // finally close the directory
+  free(dir);
 }
 
 void make_keys_all_vector(int num_tilt, vector< vector< keypointslist > >& keys_all)
 {
   /* Calculate the number of simulations, and initialize keys_all */
   keys_all = std::vector< vector< keypointslist > >(num_tilt);
-	float t_min = 1;
-	float t_k = sqrt(2.);
-	int num_rot_t2 = 10;
+  float t_min = 1;
+  float t_k = sqrt(2.);
+  int num_rot_t2 = 10;
   for (int tt = 1; tt <= num_tilt; ++tt) {
     float t = t_min * pow(t_k, tt - 1);
 

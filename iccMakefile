@@ -1,3 +1,7 @@
+# use Intel compiler
+CC = icc 
+CXX=icpc
+
 # C source code
 CSRC	= io_png/io_png.c
 # C++ source code
@@ -17,26 +21,28 @@ CXXOBJ	= $(CXXSRC:.cpp=.o)
 # all objects
 OBJ	= $(COBJ) $(CXXOBJ)
 # binary target
-BIN	= demo_ASIFT
+BIN	= demo_ASIFT_profile_not_used
 
 default	: $(BIN)
 
 # C optimization flags
-#COPT	= -O3 -ftree-vectorize -funroll-loops
-#COPT	= -m32 -mfpmath=sse -Ofast -flto -march=native -funroll-loops
-COPT	= -m64 -Ofast -flto -march=native -funroll-loops
+#COPT	= -O3 -no-prec-div -xHost -ipo -prof-use -prof-dir='./profile' -parallel
+#-prof-use
+#-prof-gen
+
+COPT	= -O3 -xHost
+
+
 
 # C++ optimization flags
 CXXOPT	= $(COPT)
 
 # C compilation flags
-CFLAGS	= $(COPT) -Wall -Wextra \
-	-Wno-write-strings -ansi
+CFLAGS	= $(COPT)
 # C++ compilation flags
-CXXFLAGS	= $(CXXOPT) -Wall -Wextra \
-	-Wno-write-strings -Wno-deprecated -ansi
+CXXFLAGS	= $(CXXOPT)
 # link flags
-LDFLAGS	= -lpng -lm
+LDFLAGS	= -lpng -lm -parallel
 
 # use local embedded libraries with `make LOCAL_LIBS=1`
 ifdef LOCAL_LIBS

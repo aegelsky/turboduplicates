@@ -65,16 +65,6 @@ static float InitSigma_aa = 1.6;
 
 #define round(x) ((x)>=0?(long)((x)+0.5):(long)((x)-0.5))
 
-/* Gaussian convolution kernels are truncated at this many sigmas from
-the center.  While it is more efficient to keep this value small,
-experiments show that for consistent scale-space analysis it needs
-a value of about 3.0, at which point the Gaussian has fallen to
-only 1% of its central value.  A value of 2.0 greatly reduces
-keypoint consistency, and a value of 4.0 is better than 3.0.
-*/
-const float GaussTruncate1 = 4.0;
-
-
 /* --------------------------- Blur image --------------------------- */
 
 
@@ -87,12 +77,10 @@ speed of previous version on a Pentium with gcc.
 */
 void ConvBufferFast(float *buffer, float *kernel, int rsize, int ksize)
 {
-  int i;
   float *bp, *kp, *endkp;
-  float sum;
 
-  for (i = 0; i < rsize; i++) {
-    sum = 0.0;
+  for (int i = 0; i < rsize; i++) {
+    float sum = 0.0;
     bp = &buffer[i];
     kp = &kernel[0];
     endkp = &kernel[ksize];
@@ -129,19 +117,18 @@ image are set to the value of the closest image pixel.
 */
 void ConvHorizontal(vector<float>& image, int width, int height, float *kernel, int ksize)
 {
-  int rows, cols, r, c, i, halfsize;
+  int i;
   float buffer[4000];
   vector<float> pixels(width*height);
 
+  int rows = height;
+  int cols = width;
 
-  rows = height;
-  cols = width;
-
-  halfsize = ksize / 2;
+  int halfsize = ksize / 2;
   pixels = image;
   assert(cols + ksize < 4000);
 
-  for (r = 0; r < rows; r++) {
+  for (int r = 0; r < rows; r++) {
     /* Copy the row into buffer with pixels at ends replicated for
     half the mask size.  This avoids need to check for ends
     within inner loop. */
@@ -153,7 +140,7 @@ void ConvHorizontal(vector<float>& image, int width, int height, float *kernel, 
       buffer[halfsize + cols + i] = pixels[r*cols+cols-1];
 
     ConvBufferFast(buffer, kernel, cols, ksize);
-    for (c = 0; c < cols; c++)
+    for (int c = 0; c < cols; c++)
       pixels[r*cols+c] = buffer[c];
   }
   image = pixels;	 
@@ -164,18 +151,18 @@ void ConvHorizontal(vector<float>& image, int width, int height, float *kernel, 
 */
 void ConvVertical(vector<float>& image, int width, int height, float *kernel, int ksize)
 {
-  int rows, cols, r, c, i, halfsize;
+  int i;
   float buffer[4000];
   vector<float> pixels(width*height);
 
-  rows = height;
-  cols = width;
+  int rows = height;
+  int cols = width;
 
-  halfsize = ksize / 2;
+  int halfsize = ksize / 2;
   pixels = image;
   assert(rows + ksize < 4000);
 
-  for (c = 0; c < cols; c++) {
+  for (int c = 0; c < cols; c++) {
     for (i = 0; i < halfsize; i++)
       buffer[i] = pixels[c];
     for (i = 0; i < rows; i++)
@@ -184,7 +171,7 @@ void ConvVertical(vector<float>& image, int width, int height, float *kernel, in
       buffer[halfsize + rows + i] = pixels[(rows - 1)*cols+c];
 
     ConvBufferFast(buffer, kernel, rows, ksize);
-    for (r = 0; r < rows; r++)
+    for (int r = 0; r < rows; r++)
       pixels[r*cols+c] = buffer[r];
   }
 
@@ -205,6 +192,16 @@ void GaussianBlur1D(vector<float>& image, int width, int height, float sigma, in
   /* The Gaussian kernel is truncated at GaussTruncate sigmas from
   center.  The kernel size should be odd.
   */
+
+  /* Gaussian convolution kernels are truncated at this many sigmas from
+  the center.  While it is more efficient to keep this value small,
+  experiments show that for consistent scale-space analysis it needs
+  a value of about 3.0, at which point the Gaussian has fallen to
+  only 1% of its central value.  A value of 2.0 greatly reduces
+  keypoint consistency, and a value of 4.0 is better than 3.0.
+  */
+  const float GaussTruncate1 = 4.0;
+
   ksize = (int)(2.0 * GaussTruncate1 * sigma + 1.0);
   ksize = MAX(3, ksize);    /* Kernel must be at least 3. */
   if (ksize % 2 == 0)       /* Make kernel size odd. */
@@ -337,7 +334,7 @@ int compute_asift_keypoints(vector<float>& image,
   vector<float> image_tmp1 = image;
 
 
-	int  counter_sim = 0;
+  int  counter_sim = 0;
   /* Calculate the number of simulations, and initialize keys_all */
   keys_all = std::vector< vector< keypointslist > >(num_tilt);	
   for (int tt = 1; tt <= num_tilt; tt++) {
@@ -370,8 +367,9 @@ int compute_asift_keypoints(vector<float>& image,
 #ifdef _OPENMP
   omp_set_nested(1);
 #endif
+int tt; // for intel compiler
 #pragma omp parallel for private(tt)
-  for (int tt = 1; tt <= num_tilt; tt++)
+  for (tt = 1; tt <= num_tilt; tt++)
   {
     float t = t_min * pow(t_k, tt-1);
 
@@ -403,7 +401,7 @@ int compute_asift_keypoints(vector<float>& image,
       num_rot1 = num_rot1 / 2;
       float delta_theta = PI/num_rot1;		
 
-			int rr;
+	  int rr;
       // Loop on rotations.
 #pragma omp parallel for private(rr)
       for ( rr = 1; rr <= num_rot1; rr++ ) 
@@ -416,6 +414,7 @@ int compute_asift_keypoints(vector<float>& image,
 
         // simulate a rotation: rotate the image with an angle theta. (the outside of the rotated image are padded with the value frot_b)
         frot(image, image_t, width, height, &width_r, &height_r, &theta, &frot_b , frot_k);
+		free(frot_k);
 
         /* Tilt */			 
         int width_t = (int) (width_r * t1);
@@ -451,7 +450,7 @@ int compute_asift_keypoints(vector<float>& image,
 
         float *image_tmp1_float = new float[width_t*height_t];
         for (int cc = 0; cc < width_t*height_t; cc++)
-          image_tmp1_float[cc] = image_tmp1[cc];	 
+          image_tmp1_float[cc] = image_tmp1[cc];
 
         // compute SIFT keypoints on simulated image. 	 
         keypointslist keypoints;
@@ -464,7 +463,7 @@ int compute_asift_keypoints(vector<float>& image,
         if ( keypoints.size() != 0 )
         {
           for ( int cc = 0; cc < (int) keypoints.size(); cc++ )
-          {		      
+          {
 
             float x0, y0, x1, y1, x2, y2, x3, y3 ,x4, y4, d1, d2, d3, d4, scale1, theta1, sin_theta1, cos_theta1, BorderTh;
 
@@ -547,6 +546,8 @@ int compute_asift_keypoints(vector<float>& image,
       }		 
     }         
   }
+  free(fproj_x4);
+  free(fproj_y4);
 
   {		
     for (int tt = 0; tt < (int) keys_all.size(); tt++)
