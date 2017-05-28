@@ -31,5 +31,7 @@ find . -name "*.png" -type f | wc -l
 find . -name "*.o" -type f -delete | rm demo_ASIFT
 
 make OMP=1
+make OMP=1 -f iccMakefile
+
 
 
